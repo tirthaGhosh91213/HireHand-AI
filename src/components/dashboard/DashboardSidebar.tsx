@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   Menu,
   FileText,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,8 +31,8 @@ const mainNav = [
 ];
 
 const adminNav = [
-  { icon: Settings, label: "Config", path: "/dashboard" },
-  { icon: Shield, label: "Audit & Governance", path: "/dashboard" },
+  { icon: Settings, label: "Config", path: "/dashboard", section: "config" },
+  { icon: Shield, label: "Audit & Governance", path: "/dashboard", section: "audit-governance" },
 ];
 
 interface DashboardSidebarProps {
@@ -49,7 +50,6 @@ export function DashboardSidebar({
   onSectionChange,
   onPasteJD,
 }: DashboardSidebarProps) {
-  const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,45 +61,46 @@ export function DashboardSidebar({
   const SidebarContent = () => (
     <>
       {/* Logo */}
-      <div className="p-4 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary shrink-0">
-          <Sparkles className="h-5 w-5 text-primary-foreground" />
+      <div className="p-8 flex flex-col gap-1">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/20 shrink-0">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xl font-bold text-foreground font-display tracking-tight"
+            >
+              HireHand AI
+            </motion.span>
+          )}
         </div>
-        {!isCollapsed && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-xl font-bold gradient-text font-display"
-          >
-            HireHand AI
-          </motion.span>
-        )}
       </div>
 
-      {/* Primary CTA */}
-      <div className="px-3 mt-2">
-        <button
-          onClick={() => {
-            onPasteJD?.();
-            isMobile && setMobileOpen(false);
-          }}
+      {/* Paste JD Button */}
+      <div className="px-4 mb-8">
+        <Button
+          onClick={onPasteJD}
           className={cn(
-            "w-full flex items-center gap-2.5 rounded-xl gradient-primary text-primary-foreground font-semibold transition-all duration-300 hover:opacity-90 hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] glow-sm",
-            isCollapsed ? "justify-center p-2.5" : "px-4 py-3 text-sm"
+            "w-full h-12 gradient-primary hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 rounded-xl text-white font-bold gap-2",
+            isCollapsed && "px-0 justify-center"
           )}
         >
-          <FileText className="h-5 w-5 shrink-0" />
-          {!isCollapsed && <span>✨ Paste Job Description</span>}
-        </button>
+          <div className="bg-white/20 p-1 rounded-md">
+            <FileText className="h-4 w-4" />
+          </div>
+          {!isCollapsed && <span className="text-sm">✨ Paste Job Description</span>}
+        </Button>
       </div>
 
       {/* Main Nav */}
-      <nav className="flex-1 p-3 mt-4 space-y-1">
-        <p className={cn("text-[10px] uppercase tracking-widest text-muted-foreground mb-2", isCollapsed && "sr-only")}>
+      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
+        <p className={cn("text-[11px] uppercase tracking-[0.2em] text-muted-foreground/50 font-bold mb-4 px-3", isCollapsed && "sr-only")}>
           Menu
         </p>
         {mainNav.map((item) => {
-          const isActive = activeSection === item.section;
+          const isActive = activeSection === item.section && activeSection !== "paste-jd";
           return (
             <button
               key={item.label}
@@ -108,50 +109,59 @@ export function DashboardSidebar({
                 isMobile && setMobileOpen(false);
               }}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold",
                 isActive
-                  ? "bg-primary/15 text-primary glow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-[#4F46E5]/10 text-[#4F46E5] shadow-sm"
+                  : "text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-foreground"
               )}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <item.icon className={cn("h-5 w-5 shrink-0 transition-colors", isActive ? "text-[#4F46E5]" : "text-muted-foreground/60")} />
               {!isCollapsed && <span>{item.label}</span>}
             </button>
           );
         })}
 
         {/* Admin Section */}
-        <div className="pt-4">
-          <p className={cn("text-[10px] uppercase tracking-widest text-muted-foreground mb-2", isCollapsed && "sr-only")}>
+        <div className="pt-8">
+          <p className={cn("text-[11px] uppercase tracking-[0.2em] text-muted-foreground/50 font-bold mb-4 px-3", isCollapsed && "sr-only")}>
             Admin
           </p>
-          {adminNav.map((item) => (
-            <Link
-              key={item.label}
-              to={item.path}
-              onClick={() => isMobile && setMobileOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>{item.label}</span>}
-            </Link>
-          ))}
+          {adminNav.map((item) => {
+            const isActive = activeSection === item.section;
+            return (
+              <button
+                key={item.label}
+                onClick={() => {
+                  onSectionChange?.(item.section);
+                  isMobile && setMobileOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold",
+                  isActive
+                    ? "bg-[#4F46E5]/10 text-[#4F46E5] shadow-sm"
+                    : "text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-foreground"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 shrink-0 transition-colors", isActive ? "text-[#4F46E5]" : "text-muted-foreground/60")} />
+                {!isCollapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
         </div>
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-border/30">
-        <Button
-          variant="ghost"
+      {/* Logout */}
+      <div className="p-6 border-t border-border/40 mt-auto">
+        <button
+          onClick={handleLogout}
           className={cn(
-            "w-full justify-start gap-3 text-muted-foreground hover:text-foreground text-sm",
+            "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-sm font-semibold",
             isCollapsed && "justify-center"
           )}
-          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
           {!isCollapsed && <span>Logout</span>}
-        </Button>
+        </button>
       </div>
     </>
   );
@@ -176,10 +186,10 @@ export function DashboardSidebar({
             className="fixed inset-0 z-40 md:hidden"
           >
             <div
-              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar border-r border-border/30 flex flex-col">
+            <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-zinc-950 flex flex-col border-r border-border/40">
               <SidebarContent />
             </div>
           </motion.div>
@@ -191,24 +201,22 @@ export function DashboardSidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: isCollapsed ? 72 : 256 }}
-      className="relative h-screen bg-sidebar border-r border-border/30 flex flex-col shrink-0"
+      animate={{ width: isCollapsed ? 90 : 280 }}
+      className="relative h-screen bg-white dark:bg-zinc-950 flex flex-col shrink-0 border-r border-border/40 shadow-sm z-30"
     >
       <SidebarContent />
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute -right-3 top-20 h-6 w-6 rounded-full border border-border bg-background shadow-sm"
+      <button
+        className="absolute -right-3 top-24 h-6 w-6 rounded-full border border-border bg-white dark:bg-zinc-900 text-muted-foreground flex items-center justify-center hover:text-primary transition-all shadow-md z-40 hover:scale-110 active:scale-95"
         onClick={onToggle}
       >
         <ChevronLeft
           className={cn(
-            "h-4 w-4 transition-transform",
+            "h-3.5 w-3.5 transition-transform duration-300",
             isCollapsed && "rotate-180"
           )}
         />
-      </Button>
+      </button>
     </motion.aside>
   );
 }
