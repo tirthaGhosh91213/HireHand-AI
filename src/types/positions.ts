@@ -37,7 +37,7 @@ export interface PositionData {
   location: string;
   department: string;
   status: string;
-  jdChoice: "create" | "upload" | null;
+  jdChoice: "create" | "upload" | "paste" | null;
   jd: PositionJD | null;
   stats: PositionStats;
   candidates: number;
@@ -160,7 +160,7 @@ export function loadPositions(): PositionData[] {
   try {
     const raw = localStorage.getItem(POSITIONS_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch { }
   return DEFAULT_POSITIONS;
 }
 

@@ -22,7 +22,9 @@ import {
   RotateCcw,
   Pencil,
   Trash2,
+  FileEdit,
 } from "lucide-react";
+import { JDInput } from "./JDInput";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +59,7 @@ import {
   createMockJD,
 } from "@/types/positions";
 
-type ModalStep = "form" | "success";
+type ModalStep = "form" | "success" | "paste-jd";
 type ModalMode = "create" | "edit";
 
 interface DashboardHomeProps {
@@ -128,13 +130,37 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
     setModalStep("success");
   };
 
-  const handleJDChoice = (choice: "create" | "upload") => {
+  const handleJDChoice = (choice: "create" | "upload" | "paste") => {
     if (!createdPosition) return;
+
+    if (choice === "paste") {
+      setModalStep("paste-jd");
+      return;
+    }
+
     const jd = choice === "create" ? createMockJD(createdPosition.title) : null;
     setPositions((prev) =>
       prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: choice, jd } : p))
     );
     setCreatedPosition((p) => (p ? { ...p, jdChoice: choice, jd } : p));
+  };
+
+  const handleJDPasted = (jdText: string) => {
+    if (!createdPosition) return;
+
+    const newJD = {
+      purpose: jdText,
+      education: ["See JD text"],
+      experience: ["See JD text"],
+      responsibilities: ["See JD text"],
+      skills: ["See JD text"],
+    };
+
+    setPositions((prev) =>
+      prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: "paste", jd: newJD } : p))
+    );
+    setCreatedPosition((p) => (p ? { ...p, jdChoice: "paste", jd: newJD } : p));
+    setModalStep("success");
   };
 
   const handleGoToPosition = () => {
@@ -260,21 +286,19 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
             <div className="flex items-center rounded-lg border border-border/40 overflow-hidden">
               <button
                 onClick={() => setStatusFilter("Active")}
-                className={`px-4 py-1.5 text-sm font-medium transition-all ${
-                  statusFilter === "Active"
+                className={`px-4 py-1.5 text-sm font-medium transition-all ${statusFilter === "Active"
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Open ({openCount})
               </button>
               <button
                 onClick={() => setStatusFilter("Closed")}
-                className={`px-4 py-1.5 text-sm font-medium transition-all ${
-                  statusFilter === "Closed"
+                className={`px-4 py-1.5 text-sm font-medium transition-all ${statusFilter === "Closed"
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Closed ({closedCount})
               </button>
@@ -311,11 +335,10 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                     <TableCell className="text-center text-foreground hidden sm:table-cell">{pos.shortlisted}</TableCell>
                     <TableCell className="hidden md:table-cell">
                       {pos.riskFlag ? (
-                        <Badge variant="outline" className={`text-xs ${
-                          pos.riskLevel === "high" ? "border-red-500/50 text-red-400 bg-red-500/10"
-                          : pos.riskLevel === "new" ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
-                          : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
-                        }`}>
+                        <Badge variant="outline" className={`text-xs ${pos.riskLevel === "high" ? "border-red-500/50 text-red-400 bg-red-500/10"
+                            : pos.riskLevel === "new" ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
+                              : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
+                          }`}>
                           {pos.riskLevel !== "new" && <AlertTriangle className="h-3 w-3 mr-1" />}
                           {pos.riskLevel === "new" && <Sparkles className="h-3 w-3 mr-1" />}
                           {pos.riskFlag}
@@ -326,11 +349,10 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={`text-xs ${
-                          pos.status === "Active"
+                        className={`text-xs ${pos.status === "Active"
                             ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                             : "bg-muted text-muted-foreground border-border/50"
-                        }`}
+                          }`}
                         variant="outline"
                       >
                         {pos.status === "Active" ? "Open" : "Closed"}
@@ -403,7 +425,7 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border/30">
                       <div className="flex items-center gap-3">
-                         <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
                           {modalMode === "edit" ? <Pencil className="h-5 w-5 text-primary-foreground" /> : <Plus className="h-5 w-5 text-primary-foreground" />}
                         </div>
                         <div>
@@ -457,7 +479,7 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                       )}
                     </div>
                   </motion.div>
-                ) : (
+                ) : modalStep === "success" ? (
                   <motion.div key="success" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                     {/* Success Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border/30">
@@ -481,11 +503,10 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                       <div className="grid grid-cols-1 gap-3">
                         <button
                           onClick={() => handleJDChoice("create")}
-                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${
-                            createdPosition?.jdChoice === "create"
+                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${createdPosition?.jdChoice === "create"
                               ? "border-primary bg-primary/10 glow-sm"
                               : "border-border/40 hover:border-primary/50 hover:bg-primary/5"
-                          }`}
+                            }`}
                         >
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl gradient-primary">
                             <Sparkles className="h-5 w-5 text-primary-foreground" />
@@ -499,20 +520,36 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
 
                         <button
                           onClick={() => handleJDChoice("upload")}
-                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${
-                            createdPosition?.jdChoice === "upload"
+                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${createdPosition?.jdChoice === "upload"
                               ? "border-primary bg-primary/10 glow-sm"
                               : "border-border/40 hover:border-primary/50 hover:bg-primary/5"
-                          }`}
+                            }`}
                         >
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
                             <Upload className="h-5 w-5 text-muted-foreground" />
                           </div>
                           <div>
                             <p className="font-semibold text-foreground text-sm">Upload JD</p>
-                            <p className="text-xs text-muted-foreground">Upload an existing job description</p>
+                            <p className="text-xs text-muted-foreground">Upload an existing document</p>
                           </div>
                           {createdPosition?.jdChoice === "upload" && <CheckCircle2 className="h-5 w-5 text-primary ml-auto" />}
+                        </button>
+
+                        <button
+                          onClick={() => handleJDChoice("paste")}
+                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${createdPosition?.jdChoice === "paste"
+                              ? "border-primary bg-primary/10 glow-sm"
+                              : "border-border/40 hover:border-primary/50 hover:bg-primary/5"
+                            }`}
+                        >
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                            <FileEdit className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground text-sm">Paste JD</p>
+                            <p className="text-xs text-muted-foreground">Manually paste the job description</p>
+                          </div>
+                          {createdPosition?.jdChoice === "paste" && <CheckCircle2 className="h-5 w-5 text-primary ml-auto" />}
                         </button>
                       </div>
                     </div>
@@ -523,6 +560,26 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                         Go to Position
                         <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="paste-jd" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-1">
+                    <div className="flex items-center justify-between p-6 border-b border-border/30">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
+                          <FileEdit className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground font-display">Paste JD</h3>
+                          <p className="text-xs text-muted-foreground">Add your job description text</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setModalStep("success")} className="rounded-full">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                      <JDInput onGenerate={handleJDPasted} isGenerating={false} />
                     </div>
                   </motion.div>
                 )}
