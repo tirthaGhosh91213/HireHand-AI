@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Star, ArrowRight } from "lucide-react";
 import { MagicButton } from "@/components/ui/magic-button";
+import { SpotlightGrid } from "@/components/ui/spotlight-grid";
 import { LogoMarquee } from "@/components/landing/LogoMarquee";
 import profileAlex from "@/assets/profile-alex.jpg";
 import profileSarah from "@/assets/profile-sarah.jpg";
@@ -9,14 +10,14 @@ import profileSarah from "@/assets/profile-sarah.jpg";
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex flex-col justify-between overflow-hidden px-4 py-8 md:py-20 pb-4 md:pb-20 bg-background">
-      {/* Dot Grid Pattern Background - on top of solid bg */}
-      <div className="absolute inset-0 bg-dot-grid" />
-      
-      {/* Central gradient glow */}
+      {/* Spotlight Grid Background */}
+      <SpotlightGrid className="opacity-60" />
+
+      {/* Central gradient glow - Animated */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-primary/30 via-accent/20 to-transparent blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 h-80 w-80 rounded-full bg-accent/15 blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-primary/30 via-accent/20 to-transparent blur-3xl animate-slow-drift" />
+        <div className="absolute top-1/3 right-1/4 h-80 w-80 rounded-full bg-accent/15 blur-3xl animate-slow-drift" style={{ animationDelay: '-5s' }} />
+        <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-primary/20 blur-3xl animate-slow-drift" style={{ animationDelay: '-10s' }} />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl w-full">

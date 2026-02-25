@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface BentoGridProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface BentoCardProps {
   description: string;
   href?: string;
   cta?: string;
+  index?: number;
 }
 
 export function BentoGrid({ children, className }: BentoGridProps) {
@@ -35,9 +37,14 @@ export function BentoCard({
   background,
   Icon,
   description,
+  index = 0,
 }: BentoCardProps) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
       className={cn(
         "group relative flex flex-col justify-between overflow-hidden rounded-xl cursor-pointer",
         "bg-card border border-border/50",
@@ -50,15 +57,20 @@ export function BentoCard({
         {background}
       </div>
       <div className="relative z-10 flex flex-col gap-4 p-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg gradient-primary transition-transform duration-300 group-hover:scale-110">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg gradient-primary transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg group-hover:shadow-primary/20">
           <Icon className="h-6 w-6 text-primary-foreground" />
         </div>
         <div>
           <h3 className="text-xl font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">{name}</h3>
-          <p className="mt-2 text-muted-foreground">{description}</p>
+          <p className="mt-2 text-muted-foreground leading-relaxed">{description}</p>
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-primary/10 group-hover:to-transparent" />
-    </div>
+
+      {/* Glint effect */}
+      <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-500 group-hover:bg-gradient-to-br group-hover:from-white/5 group-hover:to-transparent" />
+
+      {/* Spotlight border effect */}
+      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),rgba(79,70,229,0.1),transparent_40%)]" />
+    </motion.div>
   );
 }
