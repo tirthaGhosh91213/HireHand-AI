@@ -22,6 +22,8 @@ import {
   Edit3,
   Upload,
   Sparkles,
+  TrendingUp,
+  CheckCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -594,8 +596,16 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-6 space-y-6">
-                    {/* Role Purpose */}
+                  <div className="p-6 space-y-8">
+                    {/* Section 1 - Role Header */}
+                    <div className="flex flex-wrap gap-2 pb-4 border-b border-border/20">
+                      <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">{position.title}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.level}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.department}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.location}</Badge>
+                    </div>
+
+                    {/* Section 2 - Role Purpose */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Briefcase className="h-4 w-4 text-primary" />
@@ -605,7 +615,7 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Education */}
+                      {/* Section 3 - Education */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <GraduationCap className="h-4 w-4 text-primary" />
@@ -619,7 +629,7 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
                           ))}
                         </ul>
                       </div>
-                      {/* Experience */}
+                      {/* Section 4 - Experience */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-primary" />
@@ -635,10 +645,26 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
                       </div>
                     </div>
 
-                    {/* Responsibilities */}
+                    {/* Section 5 - Good-to-Have Attributes */}
+                    {jdValue.skills?.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Good-to-Have Attributes</h3>
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/30">Role Enhancers, Not Core Gates</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {jdValue.skills.map((s) => (
+                            <Badge key={s} variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs py-1">{s}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 6 - Key Responsibilities */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-primary" />
+                        <Target className="h-4 w-4 text-primary" />
                         <h3 className="text-sm font-semibold text-foreground font-display">Key Responsibilities</h3>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -651,20 +677,134 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
                       </div>
                     </div>
 
-                    {/* Skills */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground font-display">Good-to-Have Skills</h3>
+                    {/* Section 7 - Capability Stack */}
+                    {jdValue.capabilityStack?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Capability Stack</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {jdValue.capabilityStack.map((c, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                              <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                              <span className="text-sm text-foreground">{c}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {jdValue.skills.map((s) => (
-                          <Badge key={s} variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs py-1">
-                            {s}
-                          </Badge>
-                        ))}
+                    )}
+
+                    {/* Section 8 - Non-Negotiables */}
+                    {jdValue.nonNegotiables?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-red-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Non-Negotiables</h3>
+                          <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 bg-red-500/5">Hard Gates</Badge>
+                        </div>
+                        <div className="space-y-2">
+                          {jdValue.nonNegotiables.map((n, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+                              <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                              <p className="text-sm text-muted-foreground">{n}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Section 9 - 12-Month Outcomes */}
+                    {jdValue.twelveMonthOutcomes?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">12-Month Outcomes</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {jdValue.twelveMonthOutcomes.map((o, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                              <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                              <p className="text-sm text-muted-foreground">{o}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 10 - Interface Map */}
+                    {jdValue.interfaceMap?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Interface Map</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {jdValue.interfaceMap.map((m, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/20">
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
+                              <span className="text-sm text-muted-foreground">{m}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 11 - Psychometric Pattern Clusters */}
+                    {jdValue.psychometricClusters?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-violet-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Psychometric Pattern Clusters</h3>
+                          <Badge variant="outline" className="text-[10px] border-violet-400/30 text-violet-400 bg-violet-400/5">Max 5 — Scored /10</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          {jdValue.psychometricClusters.map((cluster, i) => (
+                            <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                              <div className="flex flex-col items-center gap-1 shrink-0">
+                                <div className="h-10 w-10 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+                                  <span className="text-sm font-bold text-violet-400">{cluster.score}</span>
+                                </div>
+                                <span className="text-[9px] text-muted-foreground">/10</span>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">{cluster.name}</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{cluster.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 12 - Onboarding Scorecard */}
+                    {jdValue.onboardingScorecard?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-amber-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">90-Day Onboarding + 12-Month Scorecard</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {jdValue.onboardingScorecard.map((milestone, i) => (
+                            <div key={i} className="space-y-2 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                              <div className="flex items-center gap-2">
+                                <div className="h-7 w-auto px-2 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-amber-400 whitespace-nowrap">{milestone.period}</span>
+                                </div>
+                              </div>
+                              <ul className="space-y-1.5">
+                                {milestone.objectives.map((obj, j) => (
+                                  <li key={j} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                    <span className="text-amber-400 font-bold mt-0.5 shrink-0">→</span>
+                                    {obj}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               </CardContent>

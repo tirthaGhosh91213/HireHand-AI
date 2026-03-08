@@ -15,13 +15,41 @@ export interface CandidateData {
   addedDate: string;
 }
 
+export interface PsychometricCluster {
+  name: string;
+  description: string;
+  score: number; // out of 10
+}
+
+export interface OnboardingMilestone {
+  period: string; // e.g. "30 Days", "90 Days", "12 Months"
+  objectives: string[];
+}
+
 export interface PositionJD {
   version: number;
+  // Section 2 — Role Purpose
   purpose: string;
+  // Section 3 — Education
   education: string[];
+  // Section 4 — Experience
   experience: string[];
-  responsibilities: string[];
+  // Section 5 — Good-to-Have Attributes
   skills: string[];
+  // Section 6 — Key Responsibilities
+  responsibilities: string[];
+  // Section 7 — Capability Stack
+  capabilityStack?: string[];
+  // Section 8 — Non-Negotiables / Hard Gates
+  nonNegotiables?: string[];
+  // Section 9 — 12-Month Outcomes
+  twelveMonthOutcomes?: string[];
+  // Section 10 — Interface Map
+  interfaceMap?: string[];
+  // Section 11 — Psychometric Pattern Clusters
+  psychometricClusters?: PsychometricCluster[];
+  // Section 12 — 90-Day Onboarding + 12-Month Scorecard
+  onboardingScorecard?: OnboardingMilestone[];
 }
 
 export interface PositionJDVersion {
@@ -499,5 +527,18 @@ export function createMockJD(title: string): PositionJD {
       "Contribute to continuous improvement initiatives",
     ],
     skills: ["Communication", "Problem Solving", "Teamwork", "Adaptability"],
+    capabilityStack: ["Domain expertise", "Analytical thinking", "Stakeholder management"],
+    nonNegotiables: ["Strong work ethic", "Clear communicator", "Ownership mindset"],
+    twelveMonthOutcomes: ["Deliver core project milestones", "Establish cross-functional relationships"],
+    interfaceMap: ["Reports to: Department Head", "Interfaces with: Product, Engineering, Operations"],
+    psychometricClusters: [
+      { name: "Achievement Drive", description: "High need for measurable outcomes", score: 8 },
+      { name: "Systems Thinking", description: "Ability to see patterns across complexity", score: 7 },
+    ],
+    onboardingScorecard: [
+      { period: "30 Days", objectives: ["Complete orientation", "Meet key stakeholders"] },
+      { period: "90 Days", objectives: ["Own first deliverable", "Establish team cadence"] },
+      { period: "12 Months", objectives: ["Drive measurable business outcomes", "Mentor a junior team member"] },
+    ],
   };
 }

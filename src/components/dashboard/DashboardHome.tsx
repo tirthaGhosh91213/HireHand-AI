@@ -53,13 +53,14 @@ import {
 } from "@/components/ui/table";
 import {
   PositionData,
+  PositionJD,
   loadPositions,
   savePositions,
   generateReqId,
-  createMockJD,
 } from "@/types/positions";
+import { generateJDFromInputs, generateJDContent } from "@/lib/jdService";
 
-type ModalStep = "form" | "success" | "paste-jd";
+type ModalStep = "form" | "success" | "paste-jd" | "generate-jd";
 type ModalMode = "create" | "edit";
 
 interface DashboardHomeProps {
@@ -84,6 +85,10 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
   const [createdPosition, setCreatedPosition] = useState<PositionData | null>(null);
   const [form, setForm] = useState({ title: "", bu: "", location: "", level: "Mid" });
   const [statusFilter, setStatusFilter] = useState<"Active" | "Closed">("Active");
+  const [jdGenForm, setJdGenForm] = useState({ role: "", level: "", business: "", location: "" });
+  const [isGeneratingJD, setIsGeneratingJD] = useState(false);
+  const [jdGenError, setJdGenError] = useState<string | null>(null);
+  const [isPastingJD, setIsPastingJD] = useState(false);
 
   useEffect(() => {
     savePositions(positions);
@@ -138,28 +143,81 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
       return;
     }
 
-    const jd = choice === "create" ? createMockJD(createdPosition.title) : null;
+    if (choice === "create") {
+      // Pre-fill the AI generation form from position data
+      setJdGenForm({
+        role: createdPosition.title,
+        level: createdPosition.level,
+        business: createdPosition.department,
+        location: createdPosition.location,
+      });
+      setJdGenError(null);
+      setModalStep("generate-jd");
+      return;
+    }
+
+    // upload — just mark choice without a JD for now
     setPositions((prev) =>
-      prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: choice, jd } : p))
+      prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: choice, jd: null } : p))
     );
-    setCreatedPosition((p) => (p ? { ...p, jdChoice: choice, jd } : p));
+    setCreatedPosition((p) => (p ? { ...p, jdChoice: choice, jd: null } : p));
   };
 
-  const handleJDPasted = (jdText: string) => {
+  const handleGenerateJDWithAI = async () => {
     if (!createdPosition) return;
+    setIsGeneratingJD(true);
+    setJdGenError(null);
+    try {
+      const { jd, error } = await generateJDFromInputs(
+        jdGenForm.role,
+        jdGenForm.level,
+        jdGenForm.business,
+        jdGenForm.location
+      );
+      if (error === "API_FAILED") {
+        setJdGenError("The AI API key could not be reached. A structured fallback JD has been generated instead. Please check your API key.");
+      }
+      const updatedJD: PositionJD = { ...jd, version: 1 };
+      setPositions((prev) =>
+        prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: "create", jd: updatedJD } : p))
+      );
+      setCreatedPosition((p) => (p ? { ...p, jdChoice: "create", jd: updatedJD } : p));
+      if (!error) setModalStep("success");
+    } catch {
+      setJdGenError("Something went wrong. Please try again.");
+    } finally {
+      setIsGeneratingJD(false);
+    }
+  };
 
-    const newJD = {
-      purpose: jdText,
-      education: ["See JD text"],
-      experience: ["See JD text"],
-      responsibilities: ["See JD text"],
-      skills: ["See JD text"],
-    };
+  const handleJDPasted = async (jdText: string) => {
+    if (!createdPosition) return;
+    setIsPastingJD(true);
 
-    setPositions((prev) =>
-      prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: "paste", jd: newJD } : p))
-    );
-    setCreatedPosition((p) => (p ? { ...p, jdChoice: "paste", jd: newJD } : p));
+    // Use AI to properly structure the pasted JD content
+    try {
+      const structured = await generateJDContent(jdText);
+      setPositions((prev) =>
+        prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: "paste", jd: structured } : p))
+      );
+      setCreatedPosition((p) => (p ? { ...p, jdChoice: "paste", jd: structured } : p));
+    } catch {
+      // Fallback: store raw pasted text in a minimal valid PositionJD
+      const fallbackJD: PositionJD = {
+        version: 1,
+        purpose: jdText,
+        education: [],
+        experience: [],
+        skills: [],
+        responsibilities: [],
+      };
+      setPositions((prev) =>
+        prev.map((p) => (p.id === createdPosition.id ? { ...p, jdChoice: "paste", jd: fallbackJD } : p))
+      );
+      setCreatedPosition((p) => (p ? { ...p, jdChoice: "paste", jd: fallbackJD } : p));
+    } finally {
+      setIsPastingJD(false);
+    }
     setModalStep("success");
   };
 
@@ -225,6 +283,10 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
     setEditingId(null);
     setCreatedPosition(null);
     setForm({ title: "", bu: "", location: "", level: "Mid" });
+    setJdGenForm({ role: "", level: "", business: "", location: "" });
+    setJdGenError(null);
+    setIsGeneratingJD(false);
+    setIsPastingJD(false);
   };
 
   return (
@@ -562,7 +624,7 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                       </Button>
                     </div>
                   </motion.div>
-                ) : (
+                ) : modalStep === "paste-jd" ? (
                   <motion.div key="paste-jd" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-1">
                     <div className="flex items-center justify-between p-6 border-b border-border/30">
                       <div className="flex items-center gap-3">
@@ -579,7 +641,98 @@ export function DashboardHome({ onViewPosition }: DashboardHomeProps) {
                       </Button>
                     </div>
                     <div className="max-h-[60vh] overflow-y-auto">
-                      <JDInput onGenerate={handleJDPasted} isGenerating={false} />
+                      <JDInput onGenerate={handleJDPasted} isGenerating={isPastingJD} />
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* Generate JD with AI step */
+                  <motion.div key="generate-jd" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                    <div className="flex items-center justify-between p-6 border-b border-border/30">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
+                          <Sparkles className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground font-display">Generate JD with AI</h3>
+                          <p className="text-xs text-muted-foreground">EOS_IA — 12-section role architecture</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setModalStep("success")} className="rounded-full" disabled={isGeneratingJD}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <p className="text-xs text-muted-foreground">Confirm or edit the details below. AI will generate a comprehensive 12-section job description tailored to this exact role.</p>
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Role Title</Label>
+                          <Input
+                            value={jdGenForm.role}
+                            onChange={(e) => setJdGenForm((f) => ({ ...f, role: e.target.value }))}
+                            className="bg-background/50 border-border/50 focus:border-primary text-sm"
+                            placeholder="e.g. Senior Software Engineer"
+                            disabled={isGeneratingJD}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Position / Level</Label>
+                          <Input
+                            value={jdGenForm.level}
+                            onChange={(e) => setJdGenForm((f) => ({ ...f, level: e.target.value }))}
+                            className="bg-background/50 border-border/50 focus:border-primary text-sm"
+                            placeholder="e.g. Senior, Lead, Principal"
+                            disabled={isGeneratingJD}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Business / Department</Label>
+                          <Input
+                            value={jdGenForm.business}
+                            onChange={(e) => setJdGenForm((f) => ({ ...f, business: e.target.value }))}
+                            className="bg-background/50 border-border/50 focus:border-primary text-sm"
+                            placeholder="e.g. Engineering, Product, Sales"
+                            disabled={isGeneratingJD}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Location</Label>
+                          <Input
+                            value={jdGenForm.location}
+                            onChange={(e) => setJdGenForm((f) => ({ ...f, location: e.target.value }))}
+                            className="bg-background/50 border-border/50 focus:border-primary text-sm"
+                            placeholder="e.g. San Francisco, CA or Remote"
+                            disabled={isGeneratingJD}
+                          />
+                        </div>
+                      </div>
+                      {jdGenError && (
+                        <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3">
+                          <p className="text-xs text-yellow-400 leading-relaxed">{jdGenError}</p>
+                          <div className="flex justify-end mt-2">
+                            <Button size="sm" variant="ghost" className="text-xs h-7 text-yellow-400" onClick={() => setModalStep("success")}>Continue with fallback JD</Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-end gap-3 p-6 border-t border-border/30">
+                      <Button variant="ghost" onClick={() => setModalStep("success")} disabled={isGeneratingJD}>Back</Button>
+                      <Button
+                        onClick={handleGenerateJDWithAI}
+                        disabled={!jdGenForm.role.trim() || isGeneratingJD}
+                        className="gradient-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 min-w-[160px]"
+                      >
+                        {isGeneratingJD ? (
+                          <>
+                            <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Generate JD
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </motion.div>
                 )}
