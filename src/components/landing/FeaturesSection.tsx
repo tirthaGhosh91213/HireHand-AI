@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BentoGrid, BentoCard } from "@/components/ui/bento-grid";
+import { SpotlightGrid } from "@/components/ui/spotlight-grid";
 import {
   FileText,
   Cpu,
@@ -59,9 +60,9 @@ const features = [
 export function FeaturesSection() {
   return (
     <section id="features" className="relative min-h-screen py-24 px-4 bg-secondary rounded-t-[2.5rem] shadow-2xl">
-      {/* Subtle dot grid pattern */}
-      <div className="absolute inset-0 bg-dot-grid-light rounded-t-[2.5rem] pointer-events-none" />
-      
+      {/* Spotlight Grid Background */}
+      <SpotlightGrid className="opacity-40" spotlightColor="rgba(124, 58, 237, 0.1)" />
+
       <div className="relative z-10 mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

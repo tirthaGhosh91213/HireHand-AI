@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -22,12 +22,17 @@ import {
   Edit3,
   Upload,
   Sparkles,
+  TrendingUp,
+  CheckCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PositionData, PositionJD, CandidateData, loadPositions, savePositions } from "@/types/positions";
+import { cn } from "@/lib/utils";
+import { jsPDF } from "jspdf";
+import { PositionData, PositionJD, PositionJDVersion, CandidateData, loadPositions, savePositions } from "@/types/positions";
+import { enhanceJDContent, generateJDContent } from "@/lib/jdService";
 import { CandidatesTab } from "@/components/dashboard/CandidatesTab";
 
 const TABS = [
@@ -55,9 +60,15 @@ export function PositionDetail({ positionId, onBack }: PositionDetailProps) {
     return positions.find((p) => p.id === positionId) || null;
   }, [positionId, positions]);
 
-  const handleJDSaved = useCallback((jd: PositionJD) => {
+  const handleJDSaved = useCallback((jd: PositionJD, versions: PositionJDVersion[]) => {
     setPositions((prev) => {
-      const updated = prev.map((p) => p.id === positionId ? { ...p, jd, jdChoice: "create" as const } : p);
+      const updated = prev.map((p) => p.id === positionId ? {
+        ...p,
+        jd,
+        jdVersions: versions,
+        jdChoice: "create" as const,
+        updated: new Date().toISOString().split("T")[0]
+      } : p);
       savePositions(updated);
       return updated;
     });
@@ -119,11 +130,10 @@ export function PositionDetail({ positionId, onBack }: PositionDetailProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all duration-200 ${
-              activeTab === tab.id
-                ? "bg-primary/15 text-primary glow-sm font-medium"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all duration-200 ${activeTab === tab.id
+              ? "bg-primary/15 text-primary glow-sm font-medium"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
           >
             <tab.icon className="h-4 w-4" />
             {tab.label}
@@ -216,20 +226,156 @@ function OverviewTab({ position }: { position: PositionData }) {
   );
 }
 
-function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd: PositionJD) => void }) {
+
+
+function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd: PositionJD, versions: PositionJDVersion[]) => void }) {
   const [jdView, setJdView] = useState<"choice" | "paste">("choice");
   const [jdText, setJdText] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isGeneratingInitial, setIsGeneratingInitial] = useState(false);
+  const [showEnhancePrompt, setShowEnhancePrompt] = useState(false);
+  const [enhanceInstructions, setEnhanceInstructions] = useState("");
+  const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSaveJD = () => {
+  const handleSaveJD = async () => {
     if (!jdText.trim()) return;
-    const newJD: PositionJD = {
-      purpose: jdText.trim(),
-      education: ["As described in the job description"],
-      experience: ["As described in the job description"],
-      responsibilities: ["As described in the job description"],
-      skills: ["See full JD for details"],
-    };
-    onJDSaved(newJD);
+    setIsGeneratingInitial(true);
+    try {
+      const newJD = await generateJDContent(jdText.trim());
+
+      const initialVersion: PositionJDVersion = {
+        id: crypto.randomUUID(),
+        version: 1,
+        timestamp: new Date().toLocaleString(),
+        jd: newJD,
+      };
+
+      onJDSaved(newJD, [initialVersion]);
+      setJdText("");
+    } catch (error) {
+      console.error("Failed to generate JD:", error);
+    } finally {
+      setIsGeneratingInitial(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsGeneratingInitial(true);
+    try {
+      const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64String = (reader.result as string).split(',')[1];
+            resolve(base64String);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+      };
+
+      const base64Data = await fileToBase64(file);
+
+      // Call generation with both filename context and actual file data
+      const newJD = await generateJDContent(
+        `Job description from uploaded file: ${file.name}`,
+        { data: base64Data, mimeType: file.type || "application/pdf" }
+      );
+
+      const initialVersion: PositionJDVersion = {
+        id: crypto.randomUUID(),
+        version: 1,
+        timestamp: new Date().toLocaleString(),
+        jd: newJD,
+      };
+
+      onJDSaved(newJD, [initialVersion]);
+    } catch (error) {
+      console.error("Failed to process uploaded JD:", error);
+    } finally {
+      setIsGeneratingInitial(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleEnhance = async () => {
+    if (!position.jd) return;
+    setIsEnhancing(true);
+    setShowEnhancePrompt(false);
+    try {
+      const enhanced = await enhanceJDContent(position.jd, enhanceInstructions);
+      const newVersion: PositionJDVersion = {
+        id: crypto.randomUUID(),
+        version: enhanced.version || (position.jd.version + 1),
+        timestamp: new Date().toLocaleString(),
+        jd: enhanced,
+      };
+
+      const updatedVersions = [newVersion, ...(position.jdVersions || [])];
+      onJDSaved(enhanced, updatedVersions);
+      setExpandedVersionId(newVersion.id);
+      setEnhanceInstructions("");
+    } catch (error) {
+      console.error("Failed to enhance JD:", error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleDownloadPDF = (jd: PositionJD) => {
+    const doc = new jsPDF();
+    const margin = 20;
+    let y = 20;
+
+    doc.setFontSize(22);
+    doc.text(`${position.title} - Job Description`, margin, y);
+    y += 15;
+
+    doc.setFontSize(12);
+    doc.text(`Version: ${jd.version || 1}`, margin, y);
+    y += 10;
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Role Purpose", margin, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    const purposeLines = doc.splitTextToSize(jd.purpose, 170);
+    doc.text(purposeLines, margin, y);
+    y += (purposeLines.length * 6) + 10;
+
+    const sections = [
+      { title: "Education", items: jd.education },
+      { title: "Experience", items: jd.experience },
+      { title: "Key Responsibilities", items: jd.responsibilities },
+      { title: "Good-to-Have Skills", items: jd.skills },
+    ];
+
+    sections.forEach((section) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(section.title, margin, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      section.items.forEach((item) => {
+        const itemLines = doc.splitTextToSize(`• ${item}`, 170);
+        doc.text(itemLines, margin, y);
+        y += (itemLines.length * 6);
+      });
+      y += 10;
+    });
+
+    doc.save(`${position.title.replace(/\s+/g, "_")}_JD_v${jd.version || 1}.pdf`);
   };
 
   // No JD — show choice or paste view
@@ -252,11 +398,20 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
               <Button variant="ghost" onClick={() => setJdView("choice")}>Back</Button>
               <Button
                 onClick={handleSaveJD}
-                disabled={!jdText.trim()}
-                className="gradient-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90"
+                disabled={!jdText.trim() || isGeneratingInitial}
+                className="gradient-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 min-w-[140px]"
               >
-                <Sparkles className="h-4 w-4 mr-1" />
-                Generate & Save
+                {isGeneratingInitial ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Save & Finalize
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
@@ -274,6 +429,13 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
             <p className="text-sm text-muted-foreground mt-1">Choose how you'd like to add one.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.txt"
+            />
             <button
               onClick={() => setJdView("paste")}
               className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
@@ -287,13 +449,21 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
               </div>
             </button>
             <button
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isGeneratingInitial}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group disabled:opacity-50"
             >
               <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted group-hover:bg-muted/80 transition-all">
-                <Upload className="h-6 w-6 text-muted-foreground" />
+                {isGeneratingInitial ? (
+                  <div className="h-6 w-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                )}
               </div>
               <div className="text-center">
-                <p className="font-semibold text-foreground text-sm">Upload JD</p>
+                <p className="font-semibold text-foreground text-sm">
+                  {isGeneratingInitial ? "Processing..." : "Upload JD"}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Upload a document</p>
               </div>
             </button>
@@ -304,89 +474,344 @@ function JDTab({ position, onJDSaved }: { position: PositionData; onJDSaved: (jd
   }
 
   // JD exists — render it
-  const jd = position.jd;
+  // Ensure we have at least one version for rendering if jd exists
+  const versions = position.jd
+    ? (position.jdVersions && position.jdVersions.length > 0
+      ? position.jdVersions
+      : [{
+        id: "v1-init",
+        version: position.jd.version || 1,
+        timestamp: "Initial Version",
+        jd: position.jd
+      }])
+    : [];
+
+  const currentJD = position.jd;
 
   return (
     <div className="space-y-6">
-      {/* Role Purpose */}
-      <Card className="glass-strong">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Briefcase className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground font-display">Role Purpose</h3>
-          </div>
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{jd.purpose}</p>
-        </CardContent>
-      </Card>
-
-      {/* Education & Experience */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="glass-strong">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground font-display">Education</h3>
-            </div>
-            <ul className="space-y-2">
-              {jd.education.map((e, i) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                  <span className="text-primary mt-1.5 shrink-0">•</span> {e}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className="glass-strong">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground font-display">Experience</h3>
-            </div>
-            <ul className="space-y-2">
-              {jd.experience.map((e, i) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                  <span className="text-primary mt-1.5 shrink-0">•</span> {e}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      {/* Action Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">JD Versions</h2>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDownloadPDF(currentJD)}
+            className="border-border/50 text-xs gap-2"
+          >
+            <Download className="h-3.5 w-3.5" /> Download PDF
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setShowEnhancePrompt(true)}
+            disabled={isEnhancing}
+            className="gradient-primary text-primary-foreground text-xs gap-2"
+          >
+            {isEnhancing ? (
+              <div className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Edit3 className="h-3.5 w-3.5" />
+            )}
+            Refine JD
+          </Button>
+        </div>
       </div>
 
-      {/* Responsibilities */}
-      <Card className="glass-strong">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Star className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground font-display">Key Responsibilities</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {jd.responsibilities.map((r, i) => (
-              <div key={i} className="flex items-start gap-2 p-3 rounded-lg bg-muted/30">
-                <span className="text-primary font-bold text-sm shrink-0">{i + 1}.</span>
-                <p className="text-sm text-muted-foreground">{r}</p>
+      {/* Enhancement Prompt Overlay */}
+      {showEnhancePrompt && (
+        <Card className="glass-strong border-primary/30 ring-1 ring-primary/20 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Edit3 className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground font-display">How should I refine it?</h3>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <Button variant="ghost" size="sm" onClick={() => setShowEnhancePrompt(false)} className="h-8 w-8 p-0">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <Textarea
+              placeholder="e.g., 'Make it more focused on cloud architecture' or 'Add a section about team leadership'..."
+              value={enhanceInstructions}
+              onChange={(e) => setEnhanceInstructions(e.target.value)}
+              className="min-h-[80px] text-xs bg-background/50 border-border/50"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowEnhancePrompt(false)} className="text-xs">Cancel</Button>
+              <Button size="sm" onClick={handleEnhance} className="gradient-primary text-xs h-9 px-4">Save Changes</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Skills */}
-      <Card className="glass-strong">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Target className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground font-display">Good-to-Have Skills</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {jd.skills.map((s) => (
-              <Badge key={s} variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
-                {s}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modern Versioned Display */}
+      <div className="space-y-4">
+        {versions.map((ver, idx) => {
+          const isLatest = idx === 0;
+          const isExpanded = expandedVersionId === ver.id || (isLatest && expandedVersionId === null);
+          const jdValue = ver.jd;
+
+          return (
+            <Card key={ver.id} className={cn(
+              "glass-strong transition-all duration-300 overflow-hidden",
+              isExpanded ? "ring-2 ring-primary/20 shadow-lg" : "hover:bg-muted/30 cursor-pointer"
+            )} onClick={() => !isExpanded && setExpandedVersionId(ver.id)}>
+              <CardContent className="p-0">
+                {/* Version Header Bar */}
+                <div className={cn(
+                  "flex items-center justify-between px-6 py-4 border-b border-border/5",
+                  isExpanded ? "bg-primary/5" : "bg-transparent"
+                )}>
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
+                      isLatest ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                      V{ver.version}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {idx === 0 ? "Current Version" : `Version ${ver.version}`}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{ver.timestamp}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isExpanded && (
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider h-5 px-2 bg-background/50">Minimized</Badge>
+                    )}
+                    {isExpanded && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setExpandedVersionId(null); }}>
+                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded Content */}
+                <motion.div
+                  initial={false}
+                  animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-6 space-y-8">
+                    {/* Section 1 - Role Header */}
+                    <div className="flex flex-wrap gap-2 pb-4 border-b border-border/20">
+                      <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">{position.title}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.level}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.department}</Badge>
+                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">{position.location}</Badge>
+                    </div>
+
+                    {/* Section 2 - Role Purpose */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground font-display">Role Purpose</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{jdValue.purpose}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Section 3 - Education */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Education</h3>
+                        </div>
+                        <ul className="space-y-2">
+                          {jdValue.education.map((e, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-primary mt-1.5 shrink-0">•</span> {e}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {/* Section 4 - Experience */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Experience</h3>
+                        </div>
+                        <ul className="space-y-2">
+                          {jdValue.experience.map((e, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-primary mt-1.5 shrink-0">•</span> {e}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Section 5 - Good-to-Have Attributes */}
+                    {jdValue.skills?.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Good-to-Have Attributes</h3>
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/30">Role Enhancers, Not Core Gates</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {jdValue.skills.map((s) => (
+                            <Badge key={s} variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs py-1">{s}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 6 - Key Responsibilities */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground font-display">Key Responsibilities</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {jdValue.responsibilities.map((r, i) => (
+                          <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-muted/20 border border-border/10">
+                            <span className="text-primary font-bold text-sm shrink-0">{i + 1}.</span>
+                            <p className="text-sm text-muted-foreground">{r}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Section 7 - Capability Stack */}
+                    {jdValue.capabilityStack?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Capability Stack</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {jdValue.capabilityStack.map((c, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                              <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                              <span className="text-sm text-foreground">{c}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 8 - Non-Negotiables */}
+                    {jdValue.nonNegotiables?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-red-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Non-Negotiables</h3>
+                          <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 bg-red-500/5">Hard Gates</Badge>
+                        </div>
+                        <div className="space-y-2">
+                          {jdValue.nonNegotiables.map((n, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+                              <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                              <p className="text-sm text-muted-foreground">{n}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 9 - 12-Month Outcomes */}
+                    {jdValue.twelveMonthOutcomes?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">12-Month Outcomes</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {jdValue.twelveMonthOutcomes.map((o, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                              <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                              <p className="text-sm text-muted-foreground">{o}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 10 - Interface Map */}
+                    {jdValue.interfaceMap?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Interface Map</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {jdValue.interfaceMap.map((m, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/20">
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
+                              <span className="text-sm text-muted-foreground">{m}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 11 - Psychometric Pattern Clusters */}
+                    {jdValue.psychometricClusters?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-violet-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">Psychometric Pattern Clusters</h3>
+                          <Badge variant="outline" className="text-[10px] border-violet-400/30 text-violet-400 bg-violet-400/5">Max 5 — Scored /10</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          {jdValue.psychometricClusters.map((cluster, i) => (
+                            <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                              <div className="flex flex-col items-center gap-1 shrink-0">
+                                <div className="h-10 w-10 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+                                  <span className="text-sm font-bold text-violet-400">{cluster.score}</span>
+                                </div>
+                                <span className="text-[9px] text-muted-foreground">/10</span>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">{cluster.name}</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{cluster.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 12 - Onboarding Scorecard */}
+                    {jdValue.onboardingScorecard?.length && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-amber-400" />
+                          <h3 className="text-sm font-semibold text-foreground font-display">90-Day Onboarding + 12-Month Scorecard</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {jdValue.onboardingScorecard.map((milestone, i) => (
+                            <div key={i} className="space-y-2 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                              <div className="flex items-center gap-2">
+                                <div className="h-7 w-auto px-2 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-amber-400 whitespace-nowrap">{milestone.period}</span>
+                                </div>
+                              </div>
+                              <ul className="space-y-1.5">
+                                {milestone.objectives.map((obj, j) => (
+                                  <li key={j} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                    <span className="text-amber-400 font-bold mt-0.5 shrink-0">→</span>
+                                    {obj}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

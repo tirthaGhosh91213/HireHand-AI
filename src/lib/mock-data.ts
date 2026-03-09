@@ -1,228 +1,182 @@
-import { 
-  Users, 
-  Briefcase, 
-  CalendarDays, 
-  BarChart3, 
-  Package, 
-  Settings, 
-  Shield 
-} from "lucide-react";
-
 export const CANDIDATES = [
   {
-    id: "1",
-    name: "James Morrison",
-    role: "Senior Developer @ TechCorp Inc.",
-    stage: "Interview L2",
-    resumeScore: 8.2,
-    psychometricScore: 7.8,
-    l1Score: 8.0,
-    l2Score: null,
-    compositeScore: 8.0,
-    compositePercentage: 88,
-    psychDate: "Jan 18",
-    l1Scheduled: "Jan 24",
-    l2Scheduled: "Feb 5",
-    verdict: "Go",
-    email: "james.morrison@techcorp.com",
-    experience: "8 years",
-    location: "San Francisco, CA",
-    riskFlags: [],
+      id: "C-1001",
+      name: "Emily Johnson",
+      role: "Senior Frontend Engineer",
+      location: "San Francisco, CA",
+      stage: "Offer Extended",
+      compositeScore: 9.2,
+      compositePercentage: 92,
+      verdict: "Go",
+      riskFlags: [],
+      resumeScore: 9.5,
+      psychometricScore: 8.8,
+      l1Score: 9.1,
+      l2Score: 9.4,
+      email: "emily.johnson@example.com",
+      experience: "8 Years",
+      appliedDate: "2026-02-15",
+      avatar: "https://i.pravatar.cc/150?u=emily"
   },
   {
-    id: "2",
-    name: "Priya Sharma",
-    role: "Staff Engineer @ InnovateTech",
-    stage: "Interview L2",
-    resumeScore: 9.1,
-    psychometricScore: 8.5,
-    l1Score: 8.8,
-    l2Score: 9.0,
-    compositeScore: 8.9,
-    compositePercentage: 92,
-    psychDate: "Jan 19",
-    l1Scheduled: "Jan 25",
-    l2Scheduled: "Feb 1",
-    verdict: "Go",
-    email: "priya.sharma@innovate.tech",
-    experience: "10 years",
-    location: "Bangalore, IN",
-    riskFlags: [],
+      id: "C-1002",
+      name: "Michael Chen",
+      role: "Backend Developer",
+      location: "Remote",
+      stage: "Technical Interview",
+      compositeScore: 8.5,
+      compositePercentage: 85,
+      verdict: "Pending",
+      riskFlags: ["Job Hopping"],
+      resumeScore: 8.9,
+      psychometricScore: 8.0,
+      l1Score: 8.6,
+      l2Score: null,
+      email: "michael.chen@example.com",
+      experience: "5 Years",
+      appliedDate: "2026-02-18",
+      avatar: "https://i.pravatar.cc/150?u=michael"
   },
   {
-    id: "3",
-    name: "Michael Chen",
-    role: "Lead Developer @ StartupXYZ",
-    stage: "Interview L1",
-    resumeScore: 7.5,
-    psychometricScore: 7.2,
-    l1Score: null,
-    l2Score: null,
-    compositeScore: 7.3,
-    compositePercentage: 85,
-    psychDate: "Jan 21",
-    l1Scheduled: "Feb 6",
-    l2Scheduled: null,
-    verdict: "Conditional",
-    email: "michael.chen@startupxyz.io",
-    experience: "6 years",
-    location: "Austin, TX",
-    riskFlags: ["Culture fit concerns"],
-  },
-  {
-    id: "4",
-    name: "Sarah Williams",
-    role: "Software Engineer III @ Enterprise Solutions",
-    stage: "Psychometrics",
-    resumeScore: 7.8,
-    psychometricScore: null,
-    l1Score: null,
-    l2Score: null,
-    compositeScore: 7.8,
-    compositePercentage: 86,
-    psychDate: "Feb 4",
-    l1Scheduled: null,
-    l2Scheduled: null,
-    verdict: "Pending",
-    email: "sarah.w@enterprise.com",
-    experience: "5 years",
-    location: "London, UK",
-    riskFlags: [],
-  },
-  {
-    id: "5",
-    name: "David Park",
-    role: "Senior Software Developer @ Digital Dynamics",
-    stage: "Screened",
-    resumeScore: 8.0,
-    psychometricScore: null,
-    l1Score: null,
-    l2Score: null,
-    compositeScore: 8.0,
-    compositePercentage: 89,
-    psychDate: null,
-    l1Scheduled: null,
-    l2Scheduled: null,
-    verdict: "Pending",
-    email: "david.park@digital.com",
-    experience: "7 years",
-    location: "Seoul, KR",
-    riskFlags: [],
-  },
-  {
-    id: "6",
-    name: "Emily Johnson",
-    role: "Developer @ WebTech Ltd",
-    stage: "Rejected",
-    resumeScore: 5.2,
-    psychometricScore: null,
-    l1Score: null,
-    l2Score: null,
-    compositeScore: 5.2,
-    compositePercentage: 78,
-    psychDate: null,
-    l1Scheduled: null,
-    l2Scheduled: null,
-    verdict: "No-Go",
-    email: "emily.johnson@email.com",
-    experience: "3 years",
-    location: "Seattle, WA",
-    riskFlags: ["Insufficient experience", "Missing required skills"],
+      id: "C-1003",
+      name: "Sarah Williams",
+      role: "Product Manager",
+      location: "New York, NY",
+      stage: "Initial Screening",
+      compositeScore: 7.8,
+      compositePercentage: 78,
+      verdict: "Review",
+      riskFlags: [],
+      resumeScore: 8.2,
+      psychometricScore: 8.5,
+      l1Score: null,
+      l2Score: null,
+      email: "sarah.w@example.com",
+      experience: "6 Years",
+      appliedDate: "2026-03-01",
+      avatar: "https://i.pravatar.cc/150?u=sarah"
   }
 ];
 
-export const POSITIONS = [
+export const ANALYTICS_DATA = {
+  trends: [
+      { month: "Jan", volume: 120 },
+      { month: "Feb", volume: 150 },
+      { month: "Mar", volume: 180 },
+      { month: "Apr", volume: 220 },
+      { month: "May", volume: 210 },
+      { month: "Jun", volume: 250 }
+  ],
+  funnel: [
+      { stage: "Applied", count: 800 },
+      { stage: "Screened", count: 350 },
+      { stage: "Interviewed", count: 120 },
+      { stage: "Offered", count: 40 },
+      { stage: "Hired", count: 25 }
+  ],
+  sourceMetrics: [
+      { source: "Referral", hires: 12, quality: 9.1 },
+      { source: "LinkedIn", hires: 8, quality: 8.5 },
+      { source: "Direct", hires: 5, quality: 8.2 }
+  ]
+};
+
+export const AUDIT_LOGS = [
   {
-    id: "REQ-2024-0042",
-    title: "Senior Software Engineer",
-    department: "Engineering",
-    location: "San Francisco, CA",
-    activeCandidates: 6,
+      id: "AL-1",
+      user: "System AI",
+      activity: "Auto-rejected 15 unqualified candidates for Backend Role",
+      time: "10 mins ago",
+      type: "Automated Action"
   },
   {
-    id: "REQ-2024-0035",
-    title: "Data Scientist",
-    department: "Data & Analytics",
-    location: "Austin, TX",
-    activeCandidates: 4,
+      id: "AL-2",
+      user: "System AI",
+      activity: "Generated Interview L1 Packet for Emily Johnson",
+      time: "2 hours ago",
+      type: "Document Generation"
+  },
+  {
+      id: "AL-3",
+      user: "Admin",
+      activity: "Updated hiring criteria for Product Manager",
+      time: "1 day ago",
+      type: "Configuration Change"
+  }
+];
+
+export const GOVERNANCE_SETTINGS = [
+  {
+      id: "GS-1",
+      category: "Bias Mitigation",
+      policy: "Blind Screening Enabled",
+      status: "Active",
+      lastReviewed: "2026-01-10"
+  },
+  {
+      id: "GS-2",
+      category: "Data Retention",
+      policy: "Purge rejected candidate data after 1 year",
+      status: "Active",
+      lastReviewed: "2025-11-20"
+  }
+];
+
+export const OVERRIDES = [
+  {
+      id: "OV-1",
+      candidate: "David Miller",
+      role: "Frontend Engineer",
+      aiVerdict: "Reject",
+      humanVerdict: "Proceed",
+      reason: "Strong portfolio overcomes lack of formal degree",
+      overriddenBy: "Hiring Manager",
+      date: "2026-03-02"
+  }
+];
+
+export const DECISION_PACKS = [
+  {
+      id: "DP-1001",
+      candidateRef: "C-1001",
+      candidateName: "Emily Johnson",
+      role: "Senior Frontend Engineer",
+      status: "Ready for Review",
+      generatedDate: "2026-03-05",
+      summary: "Exceptional technical skills. Strong cultural fit.",
+      documents: ["Resume Summary", "L1 Interview Notes", "Psychometric Profile"]
+  },
+  {
+      id: "DP-1002",
+      candidateRef: "C-1002",
+      candidateName: "Michael Chen",
+      role: "Backend Developer",
+      status: "Compiling",
+      generatedDate: "2026-03-08",
+      summary: "Solid backend architecture experience. Questionable job longevity.",
+      documents: ["Resume Summary", "L1 Interview Notes"]
   }
 ];
 
 export const SCHEDULED_INTERVIEWS = [
   {
-    id: "int-1",
-    candidateName: "James Morrison",
-    round: "Round L2 Interview",
-    date: "Feb 5, 2024 at 2:00 PM",
-    interviewers: ["Jennifer Walsh", "Emily Rodriguez"],
+      id: "INT-1",
+      candidateName: "Emily Johnson",
+      role: "Senior Frontend Engineer",
+      interviewer: "Alex Techlead",
+      time: "10:00 AM",
+      date: "2026-03-10",
+      type: "Technical L2",
+      status: "Confirmed"
   },
   {
-    id: "int-2",
-    candidateName: "Michael Chen",
-    round: "Round L1 Interview",
-    date: "Feb 6, 2024 at 10:00 AM",
-    interviewers: ["David Kim", "Emily Rodriguez"],
-  }
-];
-
-export const ANALYTICS_DATA = {
-  kpis: [
-    { label: "Avg Time to Fill", value: "45 days", trend: "+12% improvement", icon: CalendarDays },
-    { label: "Offer Acceptance", value: "82%", trend: "+5% vs last quarter", icon: BarChart3 },
-    { label: "Pipeline Conversion", value: "12%", trend: "Sourced → Hired", icon: Settings },
-    { label: "Interviewer Rigor", value: "8.2", trend: "Avg score quality", icon: Users },
-  ],
-  funnel: [
-    { stage: "Sourced", count: 156 },
-    { stage: "Screened", count: 84 },
-    { stage: "Psychometrics", count: 42 },
-    { stage: "Interview L1", count: 28 },
-    { stage: "Interview L2", count: 18 },
-    { stage: "Offer", count: 8 },
-    { stage: "Hired", count: 6 },
-  ],
-  sourceDistribution: [
-    { name: "LinkedIn", value: 45 },
-    { name: "Referral", value: 25 },
-    { name: "Career Site", value: 12 },
-    { name: "Indeed", value: 18 },
-  ],
-  trends: [
-    { month: "Sep", volume: 52 },
-    { month: "Oct", volume: 48 },
-    { month: "Nov", volume: 45 },
-    { month: "Dec", volume: 50 },
-    { month: "Jan", volume: 42 },
-    { month: "Feb", volume: 46 },
-  ]
-};
-
-export const DECISION_PACKS = [
-  { id: "dp-1", candidate: "Priya Sharma", role: "Staff Engineer", verdict: "Go", score: 8.9 },
-  { id: "dp-2", candidate: "James Morrison", role: "Senior Developer", verdict: "Go", score: 8.0 },
-  { id: "dp-3", candidate: "Michael Chen", role: "Lead Developer", verdict: "Conditional", score: 7.3 },
-  { id: "dp-4", candidate: "Emily Johnson", role: "Developer", verdict: "No-Go", score: 5.2 },
-];
-
-export const AUDIT_LOGS = [
-  { id: "log-1", activity: "Sarah Chen viewed Emily Johnson's profile", time: "2 hours ago" },
-  { id: "log-2", activity: "David Kim updated Michael Chen's L1 score", time: "5 hours ago" },
-  { id: "log-3", activity: "System scheduled L2 interview for James Morrison", time: "1 day ago" },
-  { id: "log-4", activity: "Sarah Chen updated Branding Colors", time: "2 days ago" },
-];
-
-export const GOVERNANCE_SETTINGS = [
-  { id: "gov-1", label: "AI-Generated JD", enabled: true },
-  { id: "gov-2", label: "AI Scoring Suggestions", enabled: true },
-  { id: "gov-3", label: "Human-Only Final Decisions", enabled: true },
-];
-
-export const OVERRIDES = [
-  { 
-    id: "ov-1", 
-    candidate: "Liam Vance", 
-    aiVerdict: "Conditional Go", 
-    humanVerdict: "Go", 
-    justification: "Candidate showed exceptional domain knowledge in the deep dive session which wasn't fully captured by the psychometric test." 
+      id: "INT-2",
+      candidateName: "Michael Chen",
+      role: "Backend Developer",
+      interviewer: "Sam Backend",
+      time: "2:00 PM",
+      date: "2026-03-11",
+      type: "System Design",
+      status: "Pending"
   }
 ];

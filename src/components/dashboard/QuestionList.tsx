@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion, Reorder } from "framer-motion";
-import { 
-  Pencil, 
-  Trash2, 
-  GripVertical, 
-  Copy, 
-  Check, 
+import {
+  Pencil,
+  Trash2,
+  GripVertical,
+  Copy,
+  Check,
   Plus,
   Download,
   ClipboardCopy
@@ -43,7 +43,7 @@ function QuestionCard({ question, onEdit, onDelete }: QuestionCardProps) {
   return (
     <Reorder.Item
       value={question}
-      className="group flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-colors"
+      className="group flex items-start gap-4 p-6 rounded-2xl bg-white dark:bg-zinc-900/50 border border-border/50 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
     >
       <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors mt-1">
         <GripVertical className="h-5 w-5" />
@@ -178,9 +178,9 @@ export function QuestionList({ questions, onUpdateQuestions, onBack }: QuestionL
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="w-full max-w-4xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full space-y-12"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -207,14 +207,14 @@ export function QuestionList({ questions, onUpdateQuestions, onBack }: QuestionL
       <div className="space-y-6">
         {QUESTION_CATEGORIES.map((category, categoryIndex) => {
           const categoryQuestions = groupedQuestions[category];
-          
+
           return (
             <motion.div
               key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: categoryIndex * 0.1 }}
-              className="glass-strong rounded-2xl p-6"
+              className="glass-strong rounded-[2rem] p-8 border border-white/10 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">

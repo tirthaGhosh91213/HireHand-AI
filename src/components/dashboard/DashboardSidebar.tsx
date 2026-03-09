@@ -23,7 +23,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const mainNav = [
   { icon: Home, label: "Home", path: "/dashboard", section: "home" },
-  { icon: Briefcase, label: "Positions", path: "/dashboard", section: "positions" },
   { icon: Users, label: "Candidates", path: "/dashboard", section: "candidates" },
   { icon: CalendarDays, label: "Scheduling", path: "/dashboard", section: "scheduling" },
   { icon: BarChart3, label: "Analytics", path: "/dashboard", section: "analytics" },
@@ -83,7 +82,10 @@ export function DashboardSidebar({
         <Button
           onClick={onPasteJD}
           className={cn(
-            "w-full h-12 gradient-primary hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 rounded-xl text-white font-bold gap-2",
+            "w-full h-12 transition-all duration-300 rounded-xl font-bold gap-2",
+            activeSection === "paste-jd"
+              ? "bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/30"
+              : "gradient-primary text-white hover:shadow-lg hover:shadow-indigo-500/20",
             isCollapsed && "px-0 justify-center"
           )}
         >

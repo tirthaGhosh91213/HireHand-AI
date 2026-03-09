@@ -145,6 +145,19 @@
     @apply bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent;
   }
 
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
@@ -180,10 +193,36 @@
   .bg-dot-grid {
     background-image: radial-gradient(circle, hsl(var(--foreground) / 0.08) 1px, transparent 1px);
     background-size: 24px 24px;
+    animation: grid-panning 60s linear infinite;
   }
 
   .bg-dot-grid-light {
     background-image: radial-gradient(circle, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
     background-size: 24px 24px;
+    animation: grid-panning 90s linear infinite;
+  }
+
+  @keyframes grid-panning {
+    from {
+      background-position: 0 0;
+    }
+
+    to {
+      background-position: 240px 240px;
+    }
+  }
+
+  .animate-slow-drift {
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    from {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    to {
+      transform: translate(-45%, -55%) scale(1.1);
+    }
   }
 }

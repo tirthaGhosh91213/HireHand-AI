@@ -15,12 +15,48 @@ export interface CandidateData {
   addedDate: string;
 }
 
+export interface PsychometricCluster {
+  name: string;
+  description: string;
+  score: number; // out of 10
+}
+
+export interface OnboardingMilestone {
+  period: string; // e.g. "30 Days", "90 Days", "12 Months"
+  objectives: string[];
+}
+
 export interface PositionJD {
+  version: number;
+  // Section 2 — Role Purpose
   purpose: string;
+  // Section 3 — Education
   education: string[];
+  // Section 4 — Experience
   experience: string[];
-  responsibilities: string[];
+  // Section 5 — Good-to-Have Attributes
   skills: string[];
+  // Section 6 — Key Responsibilities
+  responsibilities: string[];
+  // Section 7 — Capability Stack
+  capabilityStack?: string[];
+  // Section 8 — Non-Negotiables / Hard Gates
+  nonNegotiables?: string[];
+  // Section 9 — 12-Month Outcomes
+  twelveMonthOutcomes?: string[];
+  // Section 10 — Interface Map
+  interfaceMap?: string[];
+  // Section 11 — Psychometric Pattern Clusters
+  psychometricClusters?: PsychometricCluster[];
+  // Section 12 — 90-Day Onboarding + 12-Month Scorecard
+  onboardingScorecard?: OnboardingMilestone[];
+}
+
+export interface PositionJDVersion {
+  id: string;
+  version: number;
+  timestamp: string;
+  jd: PositionJD;
 }
 
 export interface PositionStats {
@@ -39,6 +75,7 @@ export interface PositionData {
   status: string;
   jdChoice: "create" | "upload" | "paste" | null;
   jd: PositionJD | null;
+  jdVersions?: PositionJDVersion[];
   stats: PositionStats;
   candidates: number;
   shortlisted: number;
@@ -50,9 +87,10 @@ export interface PositionData {
   candidatesList?: CandidateData[];
 }
 
-const POSITIONS_KEY = "hirehand-positions-v2";
+const POSITIONS_KEY = "hirehand-positions-v3";
 
 const MOCK_JD: PositionJD = {
+  version: 1,
   purpose:
     "Lead the development of scalable backend systems and distributed architectures. Collaborate with cross-functional teams to define technical strategy and deliver high-impact solutions that power our core platform.",
   education: [
@@ -102,7 +140,7 @@ export const DEFAULT_POSITIONS: PositionData[] = [
     department: "Engineering",
     status: "Active",
     jdChoice: "create",
-    jd: MOCK_JD,
+    jd: null,
     stats: { candidates: 24, avgScore: 7.9, sla: "At Risk", riskFlags: 1 },
     candidates: 24,
     shortlisted: 6,
@@ -121,7 +159,7 @@ export const DEFAULT_POSITIONS: PositionData[] = [
     department: "Product",
     status: "Active",
     jdChoice: "create",
-    jd: { ...MOCK_JD, purpose: "Drive product strategy and roadmap for key business verticals. Work with engineering and design to ship features that delight users and move core metrics." },
+    jd: null,
     stats: { candidates: 18, avgScore: 8.1, sla: "On Track", riskFlags: 0 },
     candidates: 18,
     shortlisted: 4,
@@ -143,7 +181,7 @@ export const DEFAULT_POSITIONS: PositionData[] = [
     department: "Design",
     status: "Active",
     jdChoice: "upload",
-    jd: { ...MOCK_JD, purpose: "Create intuitive, accessible, and beautiful user experiences across web and mobile platforms. Conduct research, prototype solutions, and collaborate closely with engineering." },
+    jd: null,
     stats: { candidates: 8, avgScore: 7.2, sla: "On Track", riskFlags: 1 },
     candidates: 8,
     shortlisted: 3,
@@ -151,7 +189,292 @@ export const DEFAULT_POSITIONS: PositionData[] = [
     riskLevel: "medium",
     sla: "On Track",
     slaLevel: "success",
-    updated: "2024-12-13",
+    updated: "2025-01-10",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0050",
+    title: "Backend Engineer",
+    level: "Senior",
+    location: "San Francisco, CA",
+    department: "Engineering",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 0, avgScore: 0, sla: "On Track", riskFlags: 0 },
+    candidates: 0,
+    shortlisted: 0,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-02",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0051",
+    title: "Cloud Architect",
+    level: "Principal",
+    location: "Austin, TX",
+    department: "Cloud",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 3, avgScore: 6.8, sla: "At Risk", riskFlags: 1 },
+    candidates: 3,
+    shortlisted: 1,
+    riskFlag: "Slow progression",
+    riskLevel: "medium",
+    sla: "At Risk",
+    slaLevel: "warning",
+    updated: "2025-01-05",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0052",
+    title: "Data Engineer",
+    level: "Mid-Senior",
+    location: "Remote",
+    department: "Data",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 12, avgScore: 7.5, sla: "On Track", riskFlags: 0 },
+    candidates: 12,
+    shortlisted: 3,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-07",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0053",
+    title: "Frontend Lead",
+    level: "Senior",
+    location: "Seattle, WA",
+    department: "Engineering",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 8, avgScore: 8.0, sla: "On Track", riskFlags: 0 },
+    candidates: 8,
+    shortlisted: 2,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-08",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0054",
+    title: "DevOps Engineer",
+    level: "Senior",
+    location: "Chicago, IL",
+    department: "Infrastructure",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 5, avgScore: 7.1, sla: "At Risk", riskFlags: 1 },
+    candidates: 5,
+    shortlisted: 1,
+    riskFlag: "Compliance lag",
+    riskLevel: "medium",
+    sla: "At Risk",
+    slaLevel: "warning",
+    updated: "2025-01-10",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0055",
+    title: "Data Analyst",
+    level: "Mid",
+    location: "Remote",
+    department: "Data & Analytics",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 15, avgScore: 7.8, sla: "On Track", riskFlags: 0 },
+    candidates: 15,
+    shortlisted: 4,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-12",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0056",
+    title: "Marketing Manager",
+    level: "Senior",
+    location: "New York, NY",
+    department: "Marketing",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 20, avgScore: 8.2, sla: "On Track", riskFlags: 0 },
+    candidates: 20,
+    shortlisted: 5,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-14",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0057",
+    title: "Product Designer",
+    level: "Mid-Senior",
+    location: "San Francisco, CA",
+    department: "Design",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 10, avgScore: 7.4, sla: "At Risk", riskFlags: 1 },
+    candidates: 10,
+    shortlisted: 2,
+    riskFlag: "Slowing pipeline",
+    riskLevel: "medium",
+    sla: "At Risk",
+    slaLevel: "warning",
+    updated: "2025-01-15",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0058",
+    title: "Sales Lead",
+    level: "Lead",
+    location: "Chicago, IL",
+    department: "Sales",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 30, avgScore: 8.5, sla: "On Track", riskFlags: 0 },
+    candidates: 30,
+    shortlisted: 8,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-18",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0059",
+    title: "HR Specialist",
+    level: "Junior-Mid",
+    location: "Remote",
+    department: "People",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 45, avgScore: 7.0, sla: "High Volume", riskFlags: 1 },
+    candidates: 45,
+    shortlisted: 12,
+    riskFlag: "Screening backlog",
+    riskLevel: "medium",
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-20",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0060",
+    title: "Data Scientist",
+    level: "Senior",
+    location: "Remote",
+    department: "Data Science",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 18, avgScore: 8.3, sla: "On Track", riskFlags: 0 },
+    candidates: 18,
+    shortlisted: 6,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-22",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0061",
+    title: "Mobile Developer (iOS)",
+    level: "Senior",
+    location: "San Francisco, CA",
+    department: "Engineering",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 12, avgScore: 7.6, sla: "At Risk", riskFlags: 1 },
+    candidates: 12,
+    shortlisted: 3,
+    riskFlag: "Strong competitors",
+    riskLevel: "medium",
+    sla: "At Risk",
+    slaLevel: "warning",
+    updated: "2025-01-24",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0062",
+    title: "Finance Analyst",
+    level: "Senior",
+    location: "Boston, MA",
+    department: "Finance",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 25, avgScore: 7.9, sla: "On Track", riskFlags: 0 },
+    candidates: 25,
+    shortlisted: 7,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-26",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0063",
+    title: "Operations Lead",
+    level: "Lead",
+    location: "Denver, CO",
+    department: "Operations",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 14, avgScore: 7.5, sla: "On Track", riskFlags: 0 },
+    candidates: 14,
+    shortlisted: 4,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-28",
+    candidatesList: [],
+  },
+  {
+    id: "REQ-2024-0064",
+    title: "Customer Success Manager",
+    level: "Senior",
+    location: "Remote",
+    department: "Success",
+    status: "Active",
+    jdChoice: "create",
+    jd: null,
+    stats: { candidates: 35, avgScore: 8.1, sla: "On Track", riskFlags: 0 },
+    candidates: 35,
+    shortlisted: 10,
+    riskFlag: null,
+    riskLevel: null,
+    sla: "On Track",
+    slaLevel: "success",
+    updated: "2025-01-30",
     candidatesList: [],
   },
 ];
@@ -187,6 +510,7 @@ export function generateAIScores(): { scores: CandidateScores; verdict: "Go" | "
 
 export function createMockJD(title: string): PositionJD {
   return {
+    version: 1,
     purpose: `Lead and contribute to ${title} initiatives. Collaborate across teams to deliver high-quality results aligned with organizational goals.`,
     education: [
       "Bachelor's degree in a relevant field",
@@ -203,5 +527,18 @@ export function createMockJD(title: string): PositionJD {
       "Contribute to continuous improvement initiatives",
     ],
     skills: ["Communication", "Problem Solving", "Teamwork", "Adaptability"],
+    capabilityStack: ["Domain expertise", "Analytical thinking", "Stakeholder management"],
+    nonNegotiables: ["Strong work ethic", "Clear communicator", "Ownership mindset"],
+    twelveMonthOutcomes: ["Deliver core project milestones", "Establish cross-functional relationships"],
+    interfaceMap: ["Reports to: Department Head", "Interfaces with: Product, Engineering, Operations"],
+    psychometricClusters: [
+      { name: "Achievement Drive", description: "High need for measurable outcomes", score: 8 },
+      { name: "Systems Thinking", description: "Ability to see patterns across complexity", score: 7 },
+    ],
+    onboardingScorecard: [
+      { period: "30 Days", objectives: ["Complete orientation", "Meet key stakeholders"] },
+      { period: "90 Days", objectives: ["Own first deliverable", "Establish team cadence"] },
+      { period: "12 Months", objectives: ["Drive measurable business outcomes", "Mentor a junior team member"] },
+    ],
   };
 }
